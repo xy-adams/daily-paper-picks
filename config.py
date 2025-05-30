@@ -17,11 +17,11 @@ class Config:
     
     # AI 模型配置
     MODEL_API_KEY = os.getenv('MODEL_API_KEY') or os.getenv('OPENAI_API_KEY')
-    MODEL_BASE_URL = os.getenv('MODEL_BASE_URL') or os.getenv('OPENAI_BASE_URL', 'https://api.openai.com/v1')
+    MODEL_BASE_URL = os.getenv('MODEL_BASE_URL') or os.getenv('OPENAI_BASE_URL')
     MODEL_NAME = os.getenv('MODEL_NAME', 'gpt-3.5-turbo')
     
     # 邮件配置
-    RESEND_API_KEY = os.getenv('RESEND_API_KEY', 're_PwfckyA7_9KYJLYS4v5TXQdA7gFtKRtJt')
+    RESEND_API_KEY = os.getenv('RESEND_API_KEY')
     EMAIL_FROM = "ArXiv论文助手 <onboarding@resend.dev>"
     
     # 下载配置
