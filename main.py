@@ -6,6 +6,9 @@ from arxiv_summary import ArxivSummaryGenerator
 from arxiv_research import ArxivResearcher
 from auto_email import send_email
 import logging
+import schedule
+import time
+from datetime import datetime
 
 # 配置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -130,8 +133,60 @@ def process_and_send(topic: str, target_email: str, max_papers: int = 5):
     except Exception as e:
         logger.error(f"处理过程出错: {e}")
 
-def main():
-    """主函数"""
+def scheduled_task():
+    """定时任务函数"""
+    try:
+        print(f"\n=== 定时任务开始执行 [{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] ===")
+        
+        # 固定的配置参数
+        topic = "Large Language Model"
+        target_email = "xy_wbfq@163.com"
+        max_papers = 1
+        
+        print(f"搜索主题: '{topic}'")
+        print(f"目标邮箱: {target_email}")
+        print(f"最大论文数: {max_papers}")
+        print("开始执行任务...\n")
+        
+        # 执行处理和发送
+        process_and_send(topic, target_email, max_papers)
+        
+        print(f"\n=== 定时任务执行完成 [{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] ===")
+        
+    except Exception as e:
+        logger.error(f"定时任务执行出错: {e}")
+
+def run_scheduler():
+    """运行定时任务调度器"""
+    print("=== ArXiv论文自动总结定时任务系统 ===")
+    print("程序将每天早上7:00自动执行论文搜索和总结任务")
+    print(f"当前时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print("按 Ctrl+C 停止程序")
+    print()
+    
+    # 设置定时任务：每天早上7点执行
+    schedule.every().day.at("16:55").do(scheduled_task)
+    
+    # 可选：添加立即执行一次的选项（用于测试）
+    user_input = input("是否立即执行一次任务进行测试？(y/n): ").strip().lower()
+    if user_input == 'y':
+        print("立即执行测试任务...")
+        scheduled_task()
+    
+    print(f"\n定时任务已设置，将在每天 07:00 执行")
+    print("等待定时任务触发中...")
+    
+    # 持续运行调度器
+    try:
+        while True:
+            schedule.run_pending()
+            time.sleep(60)  # 每分钟检查一次
+    except KeyboardInterrupt:
+        print("\n用户中断，定时任务停止")
+        logger.info("定时任务调度器已停止")
+
+def run_once():
+    """立即执行一次任务"""
     try:
         print("=== ArXiv论文自动总结与邮件发送系统 ===")
         print("本程序将搜索ArXiv论文，下载PDF，生成AI总结，并发送到指定邮箱")
@@ -142,7 +197,6 @@ def main():
         if not topic:
             logger.error("搜索主题不能为空")
             return
-        
         target_email = input("请输入目标邮箱地址: ").strip()
         if not target_email or '@' not in target_email:
             logger.error("请输入有效的邮箱地址")
@@ -167,6 +221,28 @@ def main():
         
         logger.info("程序运行完成！")
         
+    except KeyboardInterrupt:
+        logger.info("\n用户中断，程序退出")
+    except Exception as e:
+        logger.error(f"程序执行出错: {e}")
+
+def main():
+    """主函数"""
+    try:
+        print("请选择运行模式:")
+        print("1. 立即执行一次")
+        print("2. 定时任务模式 (每天早上7:00执行)")
+        
+        choice = input("请输入选择 (1 或 2): ").strip()
+        
+        if choice == "1":
+            run_once()
+        elif choice == "2":
+            run_scheduler()
+        else:
+            print("无效选择，默认使用立即执行模式")
+            run_once()
+            
     except KeyboardInterrupt:
         logger.info("\n用户中断，程序退出")
     except Exception as e:
