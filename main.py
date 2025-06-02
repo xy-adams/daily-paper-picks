@@ -81,39 +81,37 @@ def process_and_send(topic: str, target_email: str, max_papers: int = 5) -> bool
         
         logger.info(f"成功下载 {len(successful_downloads)} 篇论文，开始生成总结...")
         
-        # 5. 为每篇成功下载的论文生成总结并发送邮件
-        sent_count = 0
-        for paper, pdf_path in successful_downloads:
-            try:
-                logger.info(f"处理论文: {paper['title'][:50]}...")
-                
-                # 生成总结
-                html_path = summary_generator.generate_summary(paper, pdf_path)
-                if not html_path:
-                    logger.error(f"总结生成失败: {paper['id']}")
-                    continue
-                
-                # 读取HTML内容
-                content = read_html_content(html_path)
-                if not content:
-                    logger.error(f"读取总结文件失败: {html_path}")
-                    continue
-                
-                # 发送邮件
-                subject = f"ArXiv论文总结 - {paper['title'][:30]}..."
-                logger.info(f"正在发送邮件到: {target_email}")
-                if send_email(target_email, content, subject):
-                    logger.info(f"✓ 邮件发送成功: {paper['id']}")
-                    sent_count += 1
-                else:
-                    logger.error(f"✗ 邮件发送失败: {paper['id']}")
-                
-            except Exception as e:
-                logger.error(f"处理论文 {paper['id']} 时出错: {e}")
-                continue
+        if not successful_downloads:
+            logger.error("没有成功下载任何论文")
+            return False
         
-        logger.info(f"处理完成！成功发送 {sent_count}/{len(successful_downloads)} 篇论文总结")
-        return sent_count > 0
+        # 5. 生成总结并发送邮件
+        papers_list = [item[0] for item in successful_downloads]
+        pdf_paths_list = [item[1] for item in successful_downloads]
+        
+        # 使用ArxivSummaryGenerator的新方法生成合并总结
+        combined_content = summary_generator.generate_combined_summary(papers_list, pdf_paths_list, topic)
+        
+        if not combined_content:
+            logger.error("总结生成失败")
+            return False
+        
+        # 6. 发送邮件
+        if len(papers_list) == 1:
+            subject = f"ArXiv论文总结 - {papers_list[0]['title'][:30]}..."
+        else:
+            subject = f"ArXiv论文总结合集 - {topic} ({len(papers_list)}篇)"
+        
+        logger.info(f"正在发送邮件到: {target_email}")
+        if send_email(target_email, combined_content, subject):
+            if len(papers_list) == 1:
+                logger.info(f"✓ 邮件发送成功")
+            else:
+                logger.info(f"✓ 合并邮件发送成功，包含 {len(papers_list)} 篇论文")
+            return True
+        else:
+            logger.error(f"✗ 邮件发送失败")
+            return False
         
     except Exception as e:
         logger.error(f"处理过程出错: {e}")
