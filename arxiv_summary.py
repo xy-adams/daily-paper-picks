@@ -1,6 +1,5 @@
 import os
 import time
-import logging
 from pathlib import Path
 from typing import Dict, Optional, List
 import openai
@@ -8,32 +7,31 @@ from dotenv import load_dotenv
 import markdown
 import html
 import PyPDF2
+from config import Config
+from utils import setup_logger
 
 # 加载环境变量
 load_dotenv()
 
 # 配置日志
-logger = logging.getLogger(__name__)
+logger = setup_logger(__name__)
 
 class ArxivSummaryGenerator:
     """ArXiv论文总结生成器"""
     
     def __init__(self):
         # 初始化OpenAI客户端
-        api_key = os.getenv('MODEL_API_KEY') or os.getenv('OPENAI_API_KEY')
-        base_url = os.getenv('MODEL_BASE_URL') or os.getenv('OPENAI_BASE_URL', 'https://api.openai.com/v1')
-        
-        if api_key:
+        if Config.has_ai_config():
             self.client = openai.OpenAI(
-                api_key=api_key,
-                base_url=base_url
+                api_key=Config.MODEL_API_KEY,
+                base_url=Config.MODEL_BASE_URL
             )
-            self.model_name = os.getenv('MODEL_NAME', 'gpt-3.5-turbo')
+            self.model_name = Config.MODEL_NAME
         else:
             self.client = None
             logger.warning("未设置API密钥，将跳过AI总结功能")
         
-        self.data_dir = Path("./data")
+        self.data_dir = Path(Config.DATA_DIR)
         self.data_dir.mkdir(exist_ok=True)
     
     def extract_text_from_pdf(self, pdf_path: str, current_papers: List[Dict] = None) -> str:
@@ -49,11 +47,10 @@ class ArxivSummaryGenerator:
         """
         try:
             text_content = ""
-            max_pages = 20  # 限制提取的最大页数，减少处理时间
             
             with open(pdf_path, 'rb') as file:
                 reader = PyPDF2.PdfReader(file)
-                num_pages = min(len(reader.pages), max_pages)
+                num_pages = min(len(reader.pages), Config.MAX_PDF_PAGES)
                 
                 logger.info(f"提取PDF内容，限制为{num_pages}页")
                 
@@ -72,9 +69,9 @@ class ArxivSummaryGenerator:
             if text_len < 100:
                 logger.warning("PDF内容提取失败或内容过少，可能是扫描版")
                 return self._get_summary_from_paper_info(pdf_path, current_papers)
-            elif text_len > 40000:
-                logger.info(f"截断PDF内容从{text_len}到40000字符")
-                return text_content[:40000] + "...\n[内容已截断]"
+            elif text_len > Config.MAX_CONTENT_LENGTH:
+                logger.info(f"截断PDF内容从{text_len}到{Config.MAX_CONTENT_LENGTH}字符")
+                return text_content[:Config.MAX_CONTENT_LENGTH] + "...\n[内容已截断]"
             
             return text_content
             
@@ -147,9 +144,9 @@ class ArxivSummaryGenerator:
             return "无法生成AI总结：未配置API密钥"
         
         # 限制输入内容大小
-        if len(content) > 40000:
-            logger.info(f"内容过长，截断至40000字符")
-            content = content[:40000] + "\n...[内容已截断]"
+        if len(content) > Config.MAX_CONTENT_LENGTH:
+            logger.info(f"内容过长，截断至{Config.MAX_CONTENT_LENGTH}字符")
+            content = content[:Config.MAX_CONTENT_LENGTH] + "\n...[内容已截断]"
         
         prompt = f"""请对以下论文进行详细总结分析，包括：
 1. 研究背景和问题
@@ -159,6 +156,8 @@ class ArxivSummaryGenerator:
 
 请用中文总结，格式清晰，各部分用标题分隔。
 如果论文内容不完整，请根据现有内容进行总结。
+你需要总结得更可能详细，当论文内容存在图片或者表格时，
+应尽量保持其完整的输出，并且附上解释。
 
 论文内容：
 {content}
@@ -166,8 +165,8 @@ class ArxivSummaryGenerator:
         
         logger.info(f"正在生成论文总结: {paper_title}")
         
-        # 添加简单重试
-        for attempt in range(2):
+        # 使用配置中的重试次数
+        for attempt in range(Config.MAX_DOWNLOAD_RETRIES):
             try:
                 response = self.client.chat.completions.create(
                     model=self.model_name,
@@ -184,9 +183,9 @@ class ArxivSummaryGenerator:
                 return summary
                 
             except Exception as e:
-                if attempt == 0:
+                if attempt < Config.MAX_DOWNLOAD_RETRIES - 1:
                     logger.warning(f"总结生成失败，尝试重试: {e}")
-                    time.sleep(3)
+                    time.sleep(Config.RETRY_DELAY)
                 else:
                     logger.error(f"总结生成失败: {e}")
                     return f"无法生成总结: {str(e)}"

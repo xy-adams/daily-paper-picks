@@ -1,33 +1,41 @@
 import resend
-# 全局设置API_KEY（建议通过环境变量配置）
-resend.api_key ="re_PwfckyA7_9KYJLYS4v5TXQdA7gFtKRtJt"
+import logging
+from config import Config
+from utils import setup_logger
 
-def send_email(to_email: str, content: str, subject: str = "ArXiv论文总结"):
+# 设置日志
+logger = setup_logger(__name__)
+
+# 设置API密钥
+resend.api_key = Config.RESEND_API_KEY
+
+def send_email(to_email: str, content: str, subject: str = "ArXiv论文总结") -> bool:
     """
     发送HTML邮件
-    :param to_email: 目标邮箱地址
-    :param content: HTML格式邮件内容
-    :param subject: 邮件主题
+    
+    Args:
+        to_email: 目标邮箱地址
+        content: HTML格式邮件内容
+        subject: 邮件主题
+        
+    Returns:
+        bool: 发送是否成功
     """
+    if not Config.has_email_config():
+        logger.error("邮件配置未设置，无法发送邮件")
+        return False
+    
     params = {
-        "from": "ArXiv论文助手 <onboarding@resend.dev>",
+        "from": Config.EMAIL_FROM,
         "to": [to_email],
         "subject": subject,
         "html": content
     }
     
     try:
-        # 修正后的API调用方式
         email = resend.Emails.send(params)
-        print(f"邮件发送成功: {email}")
-        return email
+        logger.info(f"邮件发送成功: {email}")
+        return True
     except Exception as e:
-        print(f"邮件发送失败: {e}")
-        return None
-
-
-if __name__ == "__main__":
-    # 示例用法
-    to_email = "xy_wbfq@163.com"
-    content = "<strong>ArXiv论文总结测试邮件</strong>"
-    send_email(to_email, content)
+        logger.error(f"邮件发送失败: {e}")
+        return False

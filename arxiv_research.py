@@ -8,44 +8,42 @@ import logging
 import math
 from typing import List, Dict, Optional, Set, Tuple
 from collections import Counter
+from config import Config
+from utils import setup_logger
 
 # 配置日志
-logger = logging.getLogger(__name__)
+logger = setup_logger(__name__)
 
 class ArxivResearcher:
     """ArXiv论文研究和搜索器（优化版）"""
     
-    def __init__(self, proxies: Optional[Dict] = None, ai_client=None):
+    def __init__(self, ai_client=None):
         """
         初始化研究器
         
         Args:
-            proxies: 代理设置
             ai_client: AI客户端（可选，用于查询优化）
         """
-        self.base_url = "http://export.arxiv.org/api/query"
-        self.proxies = proxies
+        self.base_url = Config.ARXIV_BASE_URL
         
         # AI助手（可选）
         self.ai_client = ai_client
         
-        # 使用简化的停用词列表
-        self.stop_words = set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 
-                             'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 
-                             'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did',
-                             'will', 'would', 'could', 'should', 'may', 'might', 'can',
-                             'this', 'that', 'these', 'those', 'we', 'you', 'he', 'she',
-                             'it', 'they', 'them', 'their', 'our', 'your', 'his', 'her',
-                             'its', 'from', 'into', 'through', 'during', 'before', 'after',
-                             'above', 'below', 'up', 'down', 'out', 'off', 'over', 'under',
-                             'again', 'further', 'then', 'once'])
+        # 简化的停用词列表
+        self.stop_words = {
+            'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 
+            'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 
+            'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did',
+            'will', 'would', 'could', 'should', 'may', 'might', 'can',
+            'this', 'that', 'these', 'those', 'we', 'you', 'he', 'she',
+            'it', 'they', 'them', 'their', 'our', 'your', 'his', 'her',
+            'its', 'from', 'into', 'through', 'during', 'before', 'after',
+            'above', 'below', 'up', 'down', 'out', 'off', 'over', 'under',
+            'again', 'further', 'then', 'once'
+        }
         
         # 用户代理轮换
-        self.user_agents = [
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15',
-            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        ]
+        self.user_agents = Config.USER_AGENTS
         self.current_user_agent = 0
         
         # ArXiv分类映射 - 主题到相关分类的映射
@@ -385,8 +383,7 @@ class ArxivResearcher:
         logger.info(f"执行查询: {query}")
         
         try:
-            response = requests.get(self.base_url, params=params, headers=headers,
-                                  timeout=30, proxies=self.proxies)
+            response = requests.get(self.base_url, params=params, headers=headers)
             response.raise_for_status()
             
             # 解析XML
@@ -453,8 +450,7 @@ class ArxivResearcher:
             logger.info(f"查询: {optimized_query}")
             
             # 发送请求
-            response = requests.get(self.base_url, params=params, headers=headers, 
-                                  timeout=30, proxies=self.proxies)
+            response = requests.get(self.base_url, params=params, headers=headers)
             response.raise_for_status()
             
             # 解析XML
@@ -510,8 +506,7 @@ class ArxivResearcher:
             }
             
             logger.info(f"执行备用搜索: {simple_query}")
-            response = requests.get(self.base_url, params=params, headers=headers, 
-                                  timeout=30, proxies=self.proxies)
+            response = requests.get(self.base_url, params=params, headers=headers)
             response.raise_for_status()
             
             root = ET.fromstring(response.content)
@@ -707,8 +702,7 @@ class ArxivResearcher:
         
         try:
             logger.info(f"按分类搜索: {category}")
-            response = requests.get(self.base_url, params=params, headers=headers, 
-                                  timeout=30, proxies=self.proxies)
+            response = requests.get(self.base_url, params=params, headers=headers)
             response.raise_for_status()
             
             root = ET.fromstring(response.content)
@@ -751,8 +745,7 @@ class ArxivResearcher:
         
         try:
             logger.info(f"按作者搜索: {author_name}")
-            response = requests.get(self.base_url, params=params, headers=headers, 
-                                  timeout=30, proxies=self.proxies)
+            response = requests.get(self.base_url, params=params, headers=headers)
             response.raise_for_status()
             
             root = ET.fromstring(response.content)

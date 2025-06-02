@@ -1,0 +1,40 @@
+# ArXiv 论文自动处理系统环境变量配置示例
+# 复制此文件为 .env 并填入你的实际配置
+
+# ===== AI 模型配置（可以使用国内支持openai格式的大模型） =====
+# OpenAI API 密钥（必需，用于生成论文总结）
+MODEL_API_KEY=your_openai_api_key_here
+
+# OpenAI API 基础URL（可选，默认使用官方API）
+MODEL_BASE_URL=https://api.openai.com/v1
+
+# 使用的模型名称（可选，默认为gpt-3.5-turbo）
+MODEL_NAME=gpt-3.5-turbo
+
+# ===== 邮件服务配置 =====
+# Resend API 密钥（必需，用于发送邮件）
+RESEND_API_KEY=your_resend_api_key_here
+
+# 发件人邮箱地址（推荐使用 Resend 默认地址）
+EMAIL_FROM=ArXiv论文助手 <onboarding@resend.dev>
+
+# ===== 定时任务配置（仅定时模式需要） =====
+# 定时任务目标邮箱（必需）
+SCHEDULED_EMAIL=your_target_email@example.com
+
+# 定时任务搜索主题（必需）
+SCHEDULED_TOPIC=Large Language Model
+
+# 定时任务最大论文数（必需）
+SCHEDULED_MAX_PAPERS=1
+
+# 定时任务执行时间（可选，默认为07:00，格式HH:MM）
+SCHEDULED_TIME=07:00
+
+# =============================================================================
+# 使用说明
+# =============================================================================
+# 1. 复制此文件为 .env: cp env_example.txt .env
+# 2. 填入您的实际API密钥和配置
+# 3. 如果使用自定义邮箱域名，需要在 Resend 中验证域名
+#    访问 https://resend.com/domains 添加并验证您的域名

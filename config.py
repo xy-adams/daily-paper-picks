@@ -18,25 +18,24 @@ class Config:
     # AI 模型配置
     MODEL_API_KEY = os.getenv('MODEL_API_KEY') or os.getenv('OPENAI_API_KEY')
     MODEL_BASE_URL = os.getenv('MODEL_BASE_URL') or os.getenv('OPENAI_BASE_URL')
-    MODEL_NAME = os.getenv('MODEL_NAME', 'gpt-3.5-turbo')
+    MODEL_NAME = os.getenv('MODEL_NAME')
     
     # 邮件配置
     RESEND_API_KEY = os.getenv('RESEND_API_KEY')
-    EMAIL_FROM = "ArXiv论文助手 <onboarding@resend.dev>"
+    EMAIL_FROM = os.getenv('EMAIL_FROM')
+    
+    # 定时任务配置
+    SCHEDULED_TIME = os.getenv('SCHEDULED_TIME', '07:00')  # 默认早上7点
     
     # 下载配置
     MAX_DOWNLOAD_RETRIES = 2
     DOWNLOAD_TIMEOUT = 60
     RETRY_DELAY = 3
     MAX_PDF_PAGES = 20
-    MAX_CONTENT_LENGTH = 40000
+    MAX_CONTENT_LENGTH = 50000
     
     # 数据目录
     DATA_DIR = "./data"
-    
-    # 代理配置
-    HTTP_PROXY = os.getenv('HTTP_PROXY')
-    HTTPS_PROXY = os.getenv('HTTPS_PROXY')
     
     # 用户代理列表
     USER_AGENTS = [
@@ -46,25 +45,19 @@ class Config:
     ]
     
     @classmethod
-    def get_proxies(cls) -> Optional[Dict[str, str]]:
-        """获取代理配置"""
-        proxies = {}
-        if cls.HTTP_PROXY:
-            proxies['http'] = cls.HTTP_PROXY
-        if cls.HTTPS_PROXY:
-            proxies['https'] = cls.HTTPS_PROXY
-        return proxies if proxies else None
-    
-    @classmethod
     def has_ai_config(cls) -> bool:
         """检查是否配置了AI相关参数"""
         return bool(cls.MODEL_API_KEY)
+    
+    @classmethod
+    def has_email_config(cls) -> bool:
+        """检查是否配置了邮件相关参数"""
+        return bool(cls.RESEND_API_KEY)
     
     @classmethod
     def validate_config(cls) -> Dict[str, bool]:
         """验证配置完整性"""
         return {
             'ai_configured': cls.has_ai_config(),
-            'proxy_configured': bool(cls.get_proxies()),
-            'email_configured': bool(cls.RESEND_API_KEY)
+            'email_configured': cls.has_email_config()
         } 
