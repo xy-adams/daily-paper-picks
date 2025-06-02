@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>论文总结 - Segmenting France Across Four Centuries</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #f5f5f5; }
+        .container { background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #34495e; margin-top: 25px; }
+        .paper-info { background-color: #ecf0f1; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .summary-content { text-align: justify; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>论文总结</h1>
+        <div class="paper-info">
+            <h2>论文信息</h2>
+            <p><strong>标题：</strong>Segmenting France Across Four Centuries</p>
+            <p><strong>作者：</strong>Marta López-Rauhut, Hongyu Zhou, Mathieu Aubry, Loic Landrieu</p>
+            <p><strong>发布日期：</strong>日期不可用</p>
+            <p><strong>ArXiv ID：</strong>2505.24824v1</p>
+            <p><strong>PDF链接：</strong><a href="http://arxiv.org/pdf/2505.24824v1" target="_blank">http://arxiv.org/pdf/2505.24824v1</a></p>
+        </div>
+        <div class="summary-content">
+            <h2>详细总结</h2>
+            <h1>Segmenting France Across Four Centuries</h1>
+<h2>作者</h2>
+<p>Marta López-Rauhut, Hongyu Zhou, Mathieu Aubry, Loic Landrieu</p>
+<h2>发布日期</h2>
+<p>日期不可用</p>
+<h2>ArXiv ID</h2>
+<p>2505.24824v1</p>
+<h2>摘要</h2>
+<p>摘要不可用</p>
+<h2>研究背景和问题</h2>
+<p>历史地图提供了对过去几个世纪领土演变的宝贵视角，远早于卫星或遥感技术的存在。深度学习方法在分割历史地图方面显示出有希望的结果，但公开可用的数据集通常只关注单一类型的地图或时期，需要大量且昂贵的标注，并不适合全国范围、长期的分析。</p>
+<p>本文介绍了一个新的历史地图数据集，旨在使用有限的标注来分析大规模、长期的土地利用和土地覆盖演变。该数据集涵盖了法国大都会地区（548,305平方公里），包含18世纪、19世纪和20世纪的三个地图集合。我们为18世纪和19世纪的地图提供了全面的现代标签和22,878平方公里的手动标注的历史标签。</p>
+<h2>主要贡献和创新点</h2>
+<ol>
+<li><strong>新数据集</strong>：引入了一个跨越四个世纪的大规模历史地图数据集，涵盖法国大都会地区。</li>
+<li><strong>多类分割</strong>：提供多类分割标签，包括森林、水体、道路和建筑物。</li>
+<li><strong>基准方法</strong>：提出了三种基线方法，评估了直接监督模型和两种弱监督模型的性能。</li>
+<li><strong>图像到图像转换</strong>：结合CycleGAN进行图像到图像转换，以减少历史地图和现代地图之间的风格差异。</li>
+<li><strong>应用</strong>：展示了这些方法如何支持长期环境监测，提供了几个世纪以来景观变化的见解。</li>
+</ol>
+<h2>方法论</h2>
+<h3>数据集</h3>
+<ul>
+<li><strong>组成</strong>：数据集覆盖548,305平方公里，包含四个对齐的图块集，每个图块至少1000×1000像素。</li>
+<li><strong>地图集合</strong>：</li>
+<li>Cassini (18世纪)：由路易十四委托绘制，从1750年到1815年使用大地测量三角法绘制。</li>
+<li>Carte d’État-Major (19世纪)：1820年至1866年为法国军队绘制，更新了Cassini地图，包括地形起伏和单个建筑物。</li>
+<li>SCAN50 (20世纪)：1950年从1900年代前半期的地图表中编译而成，形成了一张法国中期地图。</li>
+<li>现代地图 (21世纪)：从IGN获得的当代多尺度矢量地图。</li>
+</ul>
+<h3>历史标签</h3>
+<ul>
+<li>选择了470个图块（覆盖22,878平方公里）进行手动标注，包括森林、水体、道路和建筑物等五类标签。</li>
+</ul>
+<h3>分割方法</h3>
+<ol>
+<li><strong>监督分割</strong>：使用稀疏的历史标注训练U-Net模型。</li>
+<li><strong>直接弱监督分割</strong>：使用丰富的现代土地覆盖标签直接训练U-Net模型。</li>
+<li><strong>翻译+分割</strong>：首先使用CycleGAN将历史地图转换为现代风格，然后使用现代地图和标签训练分割模型。</li>
+</ol>
+<h3>实现细节</h3>
+<ul>
+<li><strong>U-Net</strong>：使用8阶段的nnU-Net架构，每个阶段应用3×3卷积，步长为2。</li>
+<li><strong>CycleGAN</strong>：引入额外的翻译损失Ltran，确保内容一致性。</li>
+</ul>
+<h2>实验结果和结论</h2>
+<h3>评估指标</h3>
+<ul>
+<li><strong>总体准确率 (OA)</strong>：衡量整个测试集中正确分类像素的比例。</li>
+<li><strong>膨胀交并比 (dIoU)</strong>：修改标准IoU以考虑预测和真实值之间的小错位。</li>
+</ul>
+<h3>结果</h3>
+<ul>
+<li><strong>定量结果</strong>：监督方法在Cassini和État-Major地图上表现最好，翻译+分割方法在弱监督方法中表现较好。</li>
+<li><strong>定性结果</strong>：翻译+分割方法在Cassini和État-Major地图上更准确地描绘了森林边界、道路和河流。</li>
+</ul>
+<h3>应用</h3>
+<ul>
+<li><strong>长期森林监测</strong>：通过跟踪预测的森林覆盖率，重建了法国大都会地区三个世纪以来的森林覆盖演变趋势。</li>
+</ul>
+<h3>结论</h3>
+<p>本文介绍了跨越四个世纪的法国历史地图分割数据集，提供了广泛的现代标注和部分历史标注，使完全监督和弱监督方法的评估成为可能。特别是，将历史地图转换为现代风格后再应用仅在现代地图上训练的模型可以显著提高分割性能。这表明使用现代标签学习未标注地图的分割具有潜力，并能支持长期景观特征的监测。</p>
+        </div>
+    </div>
+</body>
+</html>
