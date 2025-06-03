@@ -333,7 +333,11 @@ class ArxivSummaryGenerator:
         """创建合并的邮件内容"""
         try:
             from datetime import datetime
+            from zoneinfo import ZoneInfo
             import html
+            
+            # 获取北京时间
+            shanghai_time = datetime.now(ZoneInfo("Asia/Shanghai"))
             
             # 创建邮件头部
             combined_html = f"""<!DOCTYPE html>
@@ -424,7 +428,7 @@ class ArxivSummaryGenerator:
         <div class="summary-meta">
             <p><strong>搜索主题：</strong>{html.escape(topic)}</p>
             <p><strong>论文数量：</strong>{len(papers_summaries)} 篇</p>
-            <p><strong>生成时间：</strong>{datetime.now().strftime('%Y年%m月%d日 %H:%M:%S')}</p>
+            <p><strong>生成时间：</strong>{shanghai_time.strftime('%Y年%m月%d日 %H:%M:%S')} (北京时间)</p>
         </div>
 """
 

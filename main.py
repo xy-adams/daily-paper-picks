@@ -10,9 +10,20 @@ from utils import setup_logger, validate_email
 import schedule
 import time
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 # 配置日志
 logger = setup_logger(__name__)
+
+def get_shanghai_time() -> datetime:
+    """获取北京时区的当前时间"""
+    return datetime.now(ZoneInfo("Asia/Shanghai"))
+
+def format_shanghai_time(dt: datetime = None) -> str:
+    """格式化北京时间为字符串"""
+    if dt is None:
+        dt = get_shanghai_time()
+    return dt.strftime('%Y-%m-%d %H:%M:%S')
 
 def read_html_content(file_path: str) -> str:
     """读取HTML文件内容"""
@@ -164,7 +175,7 @@ def get_user_config() -> dict:
 def scheduled_task():
     """定时任务函数"""
     try:
-        print(f"\n=== 定时任务开始执行 [{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] ===")
+        print(f"\n=== 定时任务开始执行 [{format_shanghai_time()}] ===")
         
         # 从环境变量获取配置
         topic = os.getenv('SCHEDULED_TOPIC')
@@ -188,9 +199,9 @@ def scheduled_task():
         success = process_and_send(topic, target_email, max_papers)
         
         if success:
-            print(f"\n=== 定时任务执行成功 [{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] ===")
+            print(f"\n=== 定时任务执行成功 [{format_shanghai_time()}] ===")
         else:
-            print(f"\n=== 定时任务执行失败 [{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] ===")
+            print(f"\n=== 定时任务执行失败 [{format_shanghai_time()}] ===")
         
     except Exception as e:
         logger.error(f"定时任务执行出错: {e}")
@@ -198,8 +209,8 @@ def scheduled_task():
 def run_scheduler():
     """运行定时任务调度器"""
     print("=== ArXiv论文自动总结定时任务系统 ===")
-    print(f"程序将每天 {Config.SCHEDULED_TIME} 自动执行论文搜索和总结任务")
-    print(f"当前时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"程序将每天 {Config.SCHEDULED_TIME} (北京时间) 自动执行论文搜索和总结任务")
+    print(f"当前时间: {format_shanghai_time()} (北京时间)")
     print("按 Ctrl+C 停止程序")
     print()
     
@@ -209,11 +220,27 @@ def run_scheduler():
         print("- SCHEDULED_EMAIL: 目标邮箱地址（必需）")
         print("- SCHEDULED_TOPIC: 搜索主题（必需）")
         print("- SCHEDULED_MAX_PAPERS: 最大论文数（必需）")
-        print(f"- SCHEDULED_TIME: 执行时间（可选，默认为{Config.SCHEDULED_TIME}）")
+        print(f"- SCHEDULED_TIME: 执行时间（可选，默认为{Config.SCHEDULED_TIME}，北京时间）")
         print()
     
-    # 设置定时任务：使用配置中的时间
-    schedule.every().day.at(Config.SCHEDULED_TIME).do(scheduled_task)
+    # 创建一个自定义的定时任务检查函数
+    def check_and_run_task():
+        """检查是否到达北京时间的执行时间点"""
+        shanghai_time = get_shanghai_time()
+        scheduled_time = Config.SCHEDULED_TIME
+        
+        # 解析配置的时间
+        hour, minute = map(int, scheduled_time.split(':'))
+        
+        # 检查当前北京时间是否匹配执行时间（精确到分钟）
+        if shanghai_time.hour == hour and shanghai_time.minute == minute:
+            # 为了避免在同一分钟内重复执行，检查秒数
+            if shanghai_time.second < 30:  # 只在前30秒内执行
+                logger.info(f"定时任务触发 - 北京时间: {format_shanghai_time()}")
+                scheduled_task()
+    
+    # 设置定时任务：每分钟检查一次是否到达执行时间
+    schedule.every().minute.do(check_and_run_task)
     
     # 可选：添加立即执行一次的选项（用于测试）
     user_input = input("是否立即执行一次任务进行测试？(y/n): ").strip().lower()
@@ -221,14 +248,14 @@ def run_scheduler():
         print("立即执行测试任务...")
         scheduled_task()
     
-    print(f"\n定时任务已设置，将在每天 {Config.SCHEDULED_TIME} 执行")
+    print(f"\n定时任务已设置，将在每天 {Config.SCHEDULED_TIME} (北京时间) 执行")
     print("等待定时任务触发中...")
     
     # 持续运行调度器
     try:
         while True:
             schedule.run_pending()
-            time.sleep(60)  # 每分钟检查一次
+            time.sleep(30)  # 每30秒检查一次，确保不会错过执行时间
     except KeyboardInterrupt:
         print("\n用户中断，定时任务停止")
         logger.info("定时任务调度器已停止")
