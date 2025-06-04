@@ -64,11 +64,10 @@ MODEL_NAME=gpt-3.5-turbo
 # Resend API 密钥
 RESEND_API_KEY=your_resend_api_key_here
 
-resend的apikey在网站https://resend.com/emails上申请
-
 # 发件人邮箱地址（推荐使用默认地址）
 EMAIL_FROM=ArXiv论文助手 <onboarding@resend.dev>
 ```
+resend的apikey在网站https://resend.com/emails上申请
 
 #### 定时任务配置（定时模式需要）
 ```env
