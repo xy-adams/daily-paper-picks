@@ -173,21 +173,35 @@ def get_user_config() -> dict:
     }
 
 def scheduled_task():
-    """定时任务函数"""
+    """定时任务函数 - 增强异常处理，确保任务失败不影响后续调度"""
     try:
         print(f"\n=== 定时任务开始执行 [{format_shanghai_time()}] ===")
         
         # 从环境变量获取配置
         topic = os.getenv('SCHEDULED_TOPIC')
         target_email = os.getenv('SCHEDULED_EMAIL')
-        max_papers = int(os.getenv('SCHEDULED_MAX_PAPERS'))
+        max_papers_str = os.getenv('SCHEDULED_MAX_PAPERS', '5')
+        
+        try:
+            max_papers = int(max_papers_str)
+        except (ValueError, TypeError):
+            logger.warning(f"无效的论文数量设置: {max_papers_str}, 使用默认值5")
+            max_papers = 5
         
         if not target_email:
             logger.error("定时任务需要设置SCHEDULED_EMAIL环境变量")
+            print(f"=== 定时任务配置错误 [{format_shanghai_time()}] ===")
             return
         
         if not validate_email(target_email):
             logger.error(f"无效的邮箱地址: {target_email}")
+            print(f"=== 定时任务配置错误 [{format_shanghai_time()}] ===")
+            return
+        
+        # 检查其他必要配置
+        if not topic:
+            logger.error("定时任务需要设置SCHEDULED_TOPIC环境变量")
+            print(f"=== 定时任务配置错误 [{format_shanghai_time()}] ===")
             return
         
         print(f"搜索主题: '{topic}'")
@@ -195,19 +209,38 @@ def scheduled_task():
         print(f"最大论文数: {max_papers}")
         print("开始执行任务...\n")
         
-        # 执行处理和发送
-        success = process_and_send(topic, target_email, max_papers)
+        # 执行处理和发送 - 用try-catch包装确保异常不会终止调度器
+        try:
+            success = process_and_send(topic, target_email, max_papers)
+            
+            if success:
+                logger.info("定时任务执行成功")
+                print(f"\n=== 定时任务执行成功 [{format_shanghai_time()}] ===")
+            else:
+                logger.warning("定时任务执行失败，但调度器将继续运行")
+                print(f"\n=== 定时任务执行失败 [{format_shanghai_time()}] ===")
+                
+        except Exception as task_error:
+            logger.error(f"定时任务执行过程中发生异常: {task_error}")
+            print(f"\n=== 定时任务执行异常 [{format_shanghai_time()}] ===")
+            # 不重新抛出异常，确保调度器继续运行
         
-        if success:
-            print(f"\n=== 定时任务执行成功 [{format_shanghai_time()}] ===")
-        else:
-            print(f"\n=== 定时任务执行失败 [{format_shanghai_time()}] ===")
-        
+    except KeyboardInterrupt:
+        # 用户中断应该向上传递
+        logger.info("用户中断定时任务")
+        raise
     except Exception as e:
-        logger.error(f"定时任务执行出错: {e}")
+        # 捕获所有其他异常，记录日志但不终止调度器
+        logger.error(f"定时任务调度过程中发生意外异常: {e}")
+        print(f"=== 定时任务调度异常 [{format_shanghai_time()}] ===")
+        # 不重新抛出异常
+        
+    finally:
+        # 确保调度器状态正常
+        logger.info("定时任务执行周期结束，等待下次调度")
 
 def run_scheduler():
-    """运行定时任务调度器"""
+    """运行定时任务调度器 - 增强稳定性和错误恢复机制"""
     print("=== ArXiv论文自动总结定时任务系统 ===")
     print(f"程序将每天 {Config.SCHEDULED_TIME} (北京时间) 自动执行论文搜索和总结任务")
     print(f"当前时间: {format_shanghai_time()} (北京时间)")
@@ -223,21 +256,35 @@ def run_scheduler():
         print(f"- SCHEDULED_TIME: 执行时间（可选，默认为{Config.SCHEDULED_TIME}，北京时间）")
         print()
     
-    # 创建一个自定义的定时任务检查函数
+    # 创建一个自定义的定时任务检查函数，增强异常处理
     def check_and_run_task():
-        """检查是否到达北京时间的执行时间点"""
-        shanghai_time = get_shanghai_time()
-        scheduled_time = Config.SCHEDULED_TIME
-        
-        # 解析配置的时间
-        hour, minute = map(int, scheduled_time.split(':'))
-        
-        # 检查当前北京时间是否匹配执行时间（精确到分钟）
-        if shanghai_time.hour == hour and shanghai_time.minute == minute:
-            # 为了避免在同一分钟内重复执行，检查秒数
-            if shanghai_time.second < 30:  # 只在前30秒内执行
-                logger.info(f"定时任务触发 - 北京时间: {format_shanghai_time()}")
-                scheduled_task()
+        """检查是否到达北京时间的执行时间点 - 增强异常处理"""
+        try:
+            shanghai_time = get_shanghai_time()
+            scheduled_time = Config.SCHEDULED_TIME
+            
+            # 解析配置的时间
+            try:
+                hour, minute = map(int, scheduled_time.split(':'))
+            except (ValueError, AttributeError) as e:
+                logger.error(f"时间配置格式错误: {scheduled_time}, 错误: {e}")
+                return
+            
+            # 检查当前北京时间是否匹配执行时间（精确到分钟）
+            if shanghai_time.hour == hour and shanghai_time.minute == minute:
+                # 为了避免在同一分钟内重复执行，检查秒数
+                if shanghai_time.second < 30:  # 只在前30秒内执行
+                    logger.info(f"定时任务触发 - 北京时间: {format_shanghai_time()}")
+                    # 在单独的try-catch中执行任务，确保异常不会影响调度器
+                    try:
+                        scheduled_task()
+                    except Exception as e:
+                        logger.error(f"定时任务执行过程中发生未捕获的异常: {e}")
+                        print(f"定时任务异常，但调度器继续运行: {e}")
+                        
+        except Exception as e:
+            # 捕获时间检查过程中的异常
+            logger.error(f"时间检查过程中发生异常: {e}")
     
     # 设置定时任务：每分钟检查一次是否到达执行时间
     schedule.every().minute.do(check_and_run_task)
@@ -246,19 +293,48 @@ def run_scheduler():
     user_input = input("是否立即执行一次任务进行测试？(y/n): ").strip().lower()
     if user_input == 'y':
         print("立即执行测试任务...")
-        scheduled_task()
+        try:
+            scheduled_task()
+        except Exception as e:
+            logger.error(f"测试任务执行失败: {e}")
+            print(f"测试任务执行失败，但程序将继续运行: {e}")
     
     print(f"\n定时任务已设置，将在每天 {Config.SCHEDULED_TIME} (北京时间) 执行")
     print("等待定时任务触发中...")
+    print("注意：即使单次任务失败，定时任务也会继续按计划执行")
     
-    # 持续运行调度器
+    # 持续运行调度器 - 增强错误恢复机制
+    consecutive_errors = 0
+    max_consecutive_errors = 10
+    
     try:
         while True:
-            schedule.run_pending()
-            time.sleep(30)  # 每30秒检查一次，确保不会错过执行时间
+            try:
+                schedule.run_pending()
+                consecutive_errors = 0  # 重置错误计数
+                time.sleep(30)  # 每30秒检查一次，确保不会错过执行时间
+                
+            except KeyboardInterrupt:
+                # 用户中断应该立即退出
+                raise
+            except Exception as e:
+                consecutive_errors += 1
+                logger.error(f"调度器运行异常 ({consecutive_errors}/{max_consecutive_errors}): {e}")
+                
+                if consecutive_errors >= max_consecutive_errors:
+                    logger.critical(f"调度器连续发生 {max_consecutive_errors} 次异常，程序退出")
+                    raise RuntimeError(f"调度器不稳定，连续异常: {e}")
+                
+                # 短暂等待后继续尝试
+                time.sleep(60)  # 发生异常时等待更长时间
+                
     except KeyboardInterrupt:
         print("\n用户中断，定时任务停止")
         logger.info("定时任务调度器已停止")
+    except Exception as e:
+        logger.error(f"调度器发生严重异常: {e}")
+        print(f"调度器发生严重异常: {e}")
+        raise
 
 def run_once():
     """立即执行一次任务"""
