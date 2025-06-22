@@ -1,12 +1,14 @@
 import os
 from pathlib import Path
-from arxiv_crawler import ArxivPaperCrawler
-from arxiv_process import ArxivPDFProcessor
-from arxiv_summary import ArxivSummaryGenerator
-from arxiv_research import ArxivResearcher
-from auto_email import send_email
-from config import Config
-from utils import setup_logger, validate_email
+
+from core.arxiv_crawler import ArxivContentCrawler
+from core.arxiv_summary import ArxivSummaryGenerator
+from core.arxiv_research import ArxivResearcher
+from utils.email_sender import send_email
+from config.config import Config
+from utils.logger import setup_logger
+from utils.validators import validate_email
+
 import schedule
 import time
 from datetime import datetime
@@ -61,7 +63,7 @@ def process_and_send(topic: str, target_email: str, max_papers: int = 5) -> bool
         if not papers:
             logger.warning("未找到符合条件的论文")
             return False
-        
+            
         logger.info(f"找到 {len(papers)} 篇论文")
         
         # 显示论文统计信息
@@ -72,56 +74,57 @@ def process_and_send(topic: str, target_email: str, max_papers: int = 5) -> bool
                 top_cats = [f"{cat}({count})" for cat, count in stats['top_categories'][:3]]
                 logger.info(f"主要分类: {', '.join(top_cats)}")
         
-        # 2. 批量下载PDF
-        pdf_processor = ArxivPDFProcessor(data_dir=str(data_dir))
+        # 2. 批量爬取HTML内容
+        content_crawler = ArxivContentCrawler()
         
-        logger.info("开始批量下载PDF...")
-        download_results = pdf_processor.batch_download_pdfs(papers)
+        logger.info("开始批量爬取论文HTML内容...")
+        crawl_results = {}
+        for paper in papers:
+            paper_id = paper.get('id', 'unknown')
+            pdf_url = paper.get('pdf_link') or paper.get('pdf_url')
+            if pdf_url:
+                success, content = content_crawler.crawl_paper_from_pdf_url(pdf_url, paper_id)
+                crawl_results[paper_id] = (success, content)
+            else:
+                crawl_results[paper_id] = (False, "没有PDF链接")
         
         # 3. 检查AI配置
         if not Config.has_ai_config():
             logger.warning("未配置API密钥，跳过AI总结生成")
             return False
         
-        # 4. 处理成功下载的论文
-        successful_downloads = []
-        for paper_id, result in download_results.items():
+        # 4. 处理成功爬取的论文
+        successful_crawls = []
+        for paper_id, (success, result) in crawl_results.items():
             paper = next((p for p in papers if p['id'] == paper_id), None)
-            if paper and not result.startswith("下载PDF失败") and not result.startswith("处理论文"):
-                successful_downloads.append((paper, result))
+            if paper and success:
+                successful_crawls.append((paper, result))
         
-        logger.info(f"成功下载 {len(successful_downloads)} 篇论文，开始生成总结...")
+        logger.info(f"成功爬取 {len(successful_crawls)} 篇论文，开始生成总结...")
         
-        if not successful_downloads:
-            logger.error("没有成功下载任何论文")
+        if not successful_crawls:
+            logger.error("没有成功爬取任何论文内容")
             return False
         
-        # 5. 生成总结并发送邮件
-        papers_list = [item[0] for item in successful_downloads]
-        pdf_paths_list = [item[1] for item in successful_downloads]
-        
-        # 使用ArxivSummaryGenerator的新方法生成合并总结
-        combined_content = summary_generator.generate_combined_summary(papers_list, pdf_paths_list, topic)
-        
-        if not combined_content:
-            logger.error("总结生成失败")
-            return False
-        
-        # 6. 发送邮件
-        if len(papers_list) == 1:
-            subject = f"ArXiv论文总结 - {papers_list[0]['title'][:30]}..."
-        else:
-            subject = f"ArXiv论文总结合集 - {topic} ({len(papers_list)}篇)"
-        
-        logger.info(f"正在发送邮件到: {target_email}")
-        if send_email(target_email, combined_content, subject):
-            if len(papers_list) == 1:
-                logger.info(f"✓ 邮件发送成功")
+        # 5. 逐篇处理论文并发送邮件
+        success_count = 0
+        for i, (paper, html_content) in enumerate(successful_crawls, 1):
+            paper_title = paper.get('title', '未知标题')[:50]
+            logger.info(f"正在处理第 {i}/{len(successful_crawls)} 篇论文: {paper_title}...")
+            
+            # 生成总结并发送邮件
+            if summary_generator.process_and_email(paper, html_content, target_email):
+                success_count += 1
+                logger.info(f"✓ 第 {i} 篇论文处理成功")
             else:
-                logger.info(f"✓ 合并邮件发送成功，包含 {len(papers_list)} 篇论文")
+                logger.error(f"✗ 第 {i} 篇论文处理失败")
+        
+        # 总结处理结果
+        if success_count > 0:
+            logger.info(f"✓ 成功处理并发送 {success_count}/{len(successful_crawls)} 篇论文的总结邮件")
             return True
         else:
-            logger.error(f"✗ 邮件发送失败")
+            logger.error(f"✗ 所有论文处理均失败")
             return False
         
     except Exception as e:
@@ -131,7 +134,7 @@ def process_and_send(topic: str, target_email: str, max_papers: int = 5) -> bool
 def get_user_config() -> dict:
     """获取用户配置"""
     print("=== ArXiv论文自动总结与邮件发送系统 ===")
-    print("本程序将搜索ArXiv论文，下载PDF，生成AI总结，并发送到指定邮箱")
+    print("本程序将搜索ArXiv论文，爬取HTML内容，生成AI总结，并发送到指定邮箱")
     print()
     
     # 检查配置
@@ -143,6 +146,8 @@ def get_user_config() -> dict:
     if not config_status['email_configured']:
         logger.error("邮件配置未设置，请配置RESEND_API_KEY环境变量")
         return None
+    
+
     
     # 获取用户输入
     topic = input("请输入要搜索的论文主题: ").strip()

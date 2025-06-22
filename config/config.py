@@ -20,6 +20,11 @@ class Config:
     MODEL_BASE_URL = os.getenv('MODEL_BASE_URL') or os.getenv('OPENAI_BASE_URL')
     MODEL_NAME = os.getenv('MODEL_NAME')
     
+    # LangSmith 监控配置
+    LANGSMITH_API_KEY = os.getenv('LANGSMITH_API_KEY')
+    LANGSMITH_PROJECT = os.getenv('LANGSMITH_PROJECT')
+    LANGSMITH_ENDPOINT = os.getenv('LANGSMITH_ENDPOINT')
+    
     # 邮件配置
     RESEND_API_KEY = os.getenv('RESEND_API_KEY')
     EMAIL_FROM = os.getenv('EMAIL_FROM')
@@ -28,11 +33,16 @@ class Config:
     SCHEDULED_TIME = os.getenv('SCHEDULED_TIME', '07:00')  # 默认早上7点
     
     # 下载配置
-    MAX_DOWNLOAD_RETRIES = 2
-    DOWNLOAD_TIMEOUT = 60
-    RETRY_DELAY = 3
-    MAX_PDF_PAGES = 20
-    MAX_CONTENT_LENGTH = 50000
+    MAX_DOWNLOAD_RETRIES = 3
+    DOWNLOAD_TIMEOUT = 180
+    RETRY_DELAY = 5
+    MAX_CONTENT_LENGTH = 640000  # 减小内容长度限制
+    
+    # AI调用配置
+    AI_REQUEST_TIMEOUT = 300  # AI请求超时时间（秒）
+    AI_MAX_RETRIES = 3  # AI调用最大重试次数
+    AI_RETRY_DELAY = 10  # AI重试间隔（秒）
+    CHUNK_SIZE = 640000  # 内容分块大小
     
     # 数据目录
     DATA_DIR = "./data"
@@ -55,9 +65,15 @@ class Config:
         return bool(cls.RESEND_API_KEY)
     
     @classmethod
+    def has_langsmith_config(cls) -> bool:
+        """检查是否配置了LangSmith监控参数"""
+        return bool(cls.LANGSMITH_API_KEY)
+    
+    @classmethod
     def validate_config(cls) -> Dict[str, bool]:
         """验证配置完整性"""
         return {
             'ai_configured': cls.has_ai_config(),
-            'email_configured': cls.has_email_config()
+            'email_configured': cls.has_email_config(),
+            'langsmith_configured': cls.has_langsmith_config()
         } 

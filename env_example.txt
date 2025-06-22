@@ -11,6 +11,32 @@ MODEL_BASE_URL=https://api.openai.com/v1
 # 使用的模型名称（可选，默认为gpt-3.5-turbo）
 MODEL_NAME=gpt-3.5-turbo
 
+# ===== AI调用优化配置（可选，用于解决超时问题） =====
+# AI请求超时时间（秒，默认300）
+AI_REQUEST_TIMEOUT=300
+
+# AI调用最大重试次数（默认3）
+AI_MAX_RETRIES=3
+
+# AI重试间隔（秒，默认10）
+AI_RETRY_DELAY=10
+
+# 内容长度限制（字符数，默认400000）
+MAX_CONTENT_LENGTH=400000
+
+# 内容分块大小（字符数，默认200000）
+CHUNK_SIZE=200000
+
+# ===== LangSmith 监控配置（可选，用于监控AI调用） =====
+# LangSmith API 密钥（可选，用于监控和调试AI调用）
+LANGSMITH_API_KEY=your_langsmith_api_key_here
+
+# LangSmith 项目名称（可选，默认为arxiv-paper-summary）
+LANGSMITH_PROJECT=arxiv-paper-summary
+
+# LangSmith API 端点（可选，默认为官方端点）
+LANGSMITH_ENDPOINT=https://api.smith.langchain.com
+
 # ===== 邮件服务配置 =====
 # Resend API 密钥（必需，用于发送邮件）
 RESEND_API_KEY=your_resend_api_key_here
@@ -38,3 +64,5 @@ SCHEDULED_TIME=07:00
 # 2. 填入您的实际API密钥和配置
 # 3. 如果使用自定义邮箱域名，需要在 Resend 中验证域名
 #    访问 https://resend.com/domains 添加并验证您的域名
+# 4. LangSmith 配置是可选的，用于监控和调试AI模型调用
+#    访问 https://smith.langchain.com 获取API密钥
