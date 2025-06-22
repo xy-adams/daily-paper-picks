@@ -173,15 +173,23 @@ class ArxivSummaryGenerator:
     def save_summary(self, html_content: str, topic: str) -> str:
         """保存HTML总结到文件"""
         try:
+            # 检查内容是否为空
+            if not html_content or html_content.strip() == "":
+                logger.error("无法保存空的HTML内容")
+                return ""
+            
             # 生成文件名
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            filename = f"arxiv_summary_{topic.replace(' ', '_')}_{timestamp}.html"
+            # 清理topic中的非法字符
+            safe_topic = "".join(c for c in topic if c.isalnum() or c in " -_").strip()
+            safe_topic = safe_topic.replace(' ', '_')[:50]  # 限制长度
+            filename = f"arxiv_summary_{safe_topic}_{timestamp}.html"
             filepath = self.data_dir / filename
             
             with open(filepath, 'w', encoding='utf-8') as f:
                 f.write(html_content)
                 
-            logger.info(f"总结已保存到: {filepath}")
+            logger.info(f"总结已保存到: {filepath} (大小: {len(html_content)} 字符)")
             return str(filepath)
             
         except Exception as e:
@@ -200,24 +208,46 @@ class ArxivSummaryGenerator:
         Returns:
             bool: 是否成功
         """
-        # 生成总结
-        summary_html = self.generate_summary(paper, html_content)
-        if not summary_html:
-            logger.error("总结生成失败")
-            return False
-        
-        # 保存总结
-        paper_title = paper.get('title', '论文总结')
-        self.save_summary(summary_html, paper_title)
-        
-        # 生成邮件主题
-        subject = f"ArXiv论文总结 - {paper['title'][:30]}..."
-        
-        # 发送邮件
-        success = send_email(email, summary_html, subject)
-        if success:
-            logger.info(f"邮件发送成功到: {email}")
-        else:
-            logger.error(f"邮件发送失败到: {email}")
-        
-        return success 
+        try:
+            paper_title = paper.get('title', '论文总结')
+            paper_id = paper.get('id', 'unknown')
+            
+            logger.info(f"开始处理论文: {paper_title[:50]}... (ID: {paper_id})")
+            
+            # 验证输入参数
+            if not html_content or html_content.strip() == "":
+                logger.error("HTML内容为空，无法生成总结")
+                return False
+            
+            # 生成总结
+            logger.info("正在生成AI总结...")
+            summary_html = self.generate_summary(paper, html_content)
+            
+            if not summary_html or summary_html.strip() == "":
+                logger.error("AI总结生成失败或返回空内容")
+                return False
+            
+            logger.info(f"AI总结生成成功 (长度: {len(summary_html)} 字符)")
+            
+            # 保存总结 - 只有在成功生成总结时才保存
+            saved_path = self.save_summary(summary_html, paper_title)
+            if not saved_path:
+                logger.error("总结保存失败")
+                return False
+            
+            # 生成邮件主题
+            subject = f"ArXiv论文总结 - {paper_title[:30]}..."
+            
+            # 发送邮件
+            logger.info("正在发送邮件...")
+            success = send_email(email, summary_html, subject)
+            if success:
+                logger.info(f"邮件发送成功到: {email}")
+            else:
+                logger.error(f"邮件发送失败到: {email}")
+            
+            return success
+            
+        except Exception as e:
+            logger.error(f"处理论文时发生异常: {e}")
+            return False 

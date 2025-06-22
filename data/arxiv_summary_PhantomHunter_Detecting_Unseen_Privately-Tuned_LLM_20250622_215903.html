@@ -1,0 +1,321 @@
+```html
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhantomHunter: 论文总结</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .card {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .header-card {
+            text-align: center;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            padding: 30px;
+        }
+        .header-card h1 {
+            margin: 0;
+            font-size: 2.2em;
+        }
+        .header-card .authors {
+            font-style: italic;
+            margin: 15px 0;
+        }
+        .header-card .links a {
+            color: white;
+            text-decoration: none;
+            margin: 0 10px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            background-color: rgba(255, 255, 255, 0.2);
+            transition: background-color 0.3s;
+        }
+        .header-card .links a:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+        .section-title {
+            background: linear-gradient(90deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            color: #333;
+        }
+        .subsection-title {
+            font-size: 1.1em;
+            color: #444;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            padding-left: 10px;
+            border-left: 4px solid #2575fc;
+        }
+        .highlight {
+            font-weight: bold;
+            color: #2575fc;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 20px auto;
+            border-radius: 5px;
+        }
+        .formula {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: monospace;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #666;
+            font-size: 0.9em;
+        }
+        @media (max-width: 768px) {
+            .card {
+                padding: 15px;
+            }
+            .header-card h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 第一张卡片：标题、作者、链接 -->
+        <div class="card header-card">
+            <h1>PhantomHunter: Detecting Unseen Privately-Tuned LLM-Generated Text via Family-Aware Learning</h1>
+            <div class="authors">
+                Yuhui Shi, Yehan Yang, Qiang Sheng, Hao Mi, Beizhe Hu, Chaoxi Xu, Juan Cao
+            </div>
+            <div class="links">
+                <a href="http://arxiv.org/html/2506.15683v1" target="_blank">论文链接</a>
+            </div>
+        </div>
+
+        <!-- 第二张卡片：摘要 -->
+        <div class="card">
+            <h2 class="section-title">摘要</h2>
+            <p>With the popularity of large language models (LLMs), undesirable societal problems like misinformation production and academic misconduct have been more severe, making LLM-generated text detection now of unprecedented importance. Although existing methods have made remarkable progress, a new challenge posed by text from privately tuned LLMs remains underexplored. Users could easily possess private LLMs by fine-tuning an open-source one with private corpora, resulting in a significant performance drop of existing detectors in practice. To address this issue, we propose PhantomHunter, an LLM-generated text detector specialized for detecting text from unseen, privately-tuned LLMs. Its family-aware learning framework captures family-level traits shared across the base models and their derivatives, instead of memorizing individual characteristics. Experiments on data from LLaMA, Gemma, and Mistral families show its superiority over 7 baselines and 3 industrial services, with F1 scores of over 96%.</p>
+        </div>
+
+        <!-- 背景部分 -->
+        <div class="card">
+            <h2 class="section-title">背景</h2>
+            
+            <h3 class="subsection-title">存在的问题</h3>
+            <p>随着大型语言模型(LLMs)的普及，不当使用导致的社会问题日益严重，如学术不端和虚假信息传播。虽然现有的LLM生成文本检测方法已取得显著进展，但<span class="highlight">私有调优LLM生成的文本检测</span>这一新挑战尚未得到充分研究。用户可以轻松通过私有数据微调开源LLM获得私有模型，导致现有检测器性能显著下降。</p>
+            
+            <h3 class="subsection-title">之前的方法及不足</h3>
+            <p>现有方法主要分为两类：基于语义特征的方法(如RoBERTa)和基于概率特征的方法(如SeqXGPT)。这些方法大多假设用户使用公开可用的LLM服务生成文本，而忽视了私有调优LLM带来的挑战。实验表明，当LLM在113万token数据上微调后，SeqXGPT的检测准确率下降了惊人的41%。</p>
+            
+            <h3 class="subsection-title">论文提出的方法及贡献</h3>
+            <p>论文提出<span class="highlight">PhantomHunter</span>，一种专门用于检测未见过的私有调优LLM生成文本的检测器。其主要贡献包括：</p>
+            <ul>
+                <li>揭示了当前检测器对私有调优LLM生成文本检测失败的新风险</li>
+                <li>提出通过家族感知学习(family-aware learning)捕获开源LLM家族的共同特征</li>
+                <li>在LLaMA、Gemma和Mistral家族数据上的实验表明，其性能优于7个基线方法和3个工业服务</li>
+            </ul>
+        </div>
+
+        <!-- 方法部分 -->
+        <div class="card">
+            <h2 class="section-title">方法</h2>
+            <p>PhantomHunter基于家族感知学习框架，包含三个主要组件：</p>
+            
+            <h3 class="subsection-title">1. 基础概率特征提取</h3>
+            <p>对于给定文本序列x，将其通过M个基础LLM获得概率列表p：</p>
+            <div class="formula">
+                p = (p<sup>θ1</sup>, p<sup>θ2</sup>, ..., p<sup>θM</sup>)
+            </div>
+            <p>其中p<sup>θi</sup>表示使用LLM θi生成每个token的概率。然后使用CNN和Transformer编码器提取基础概率特征R<sub>F</sub>∈ℝ<sup>M×d</sup>。</p>
+            
+            <h3 class="subsection-title">2. 对比式家族感知学习</h3>
+            <p>采用SimCLR风格的对比损失ℒ<sub>C</sub>增强家族内样本的特征相似性：</p>
+            <div class="formula">
+                ℒ<sub>C</sub> = -∑<sub>i∈b</sub> log[exp(δ(R<sub>Fi</sub><sup>m</sup>, R̃<sub>Fi</sub><sup>m</sup>)/t)/∑<sub>j=1</sub><sup>2|b|</sup> 1<sub>[j≠i]</sub>exp(δ(R<sub>Fi</sub><sup>m</sup>, R<sub>Fj</sub>)/t)]
+            </div>
+            <p>同时使用MLP预测文本所属的LLM家族：</p>
+            <div class="formula">
+                ŷ<sub>F</sub> = softmax(MLP<sub>F</sub>(R<sub>F</sub>))
+            </div>
+            
+            <h3 class="subsection-title">3. 专家混合检测</h3>
+            <p>使用家族预测结果作为门控信号，控制各专家检测器的权重，得到最终的二分类判断：</p>
+            <div class="formula">
+                ŷ<sub>B</sub> = ∑<sub>i=1</sub><sup>M</sup> ŷ<sub>F</sub><sup>i</sup>·softmax(MLP<sub>B</sub>(R<sub>F</sub>))
+            </div>
+            <p>总体优化目标为：</p>
+            <div class="formula">
+                ℒ = λ<sub>1</sub>(ℒ<sub>F</sub> + ℒ̃<sub>F</sub>) + λ<sub>2</sub>ℒ<sub>B</sub> + λ<sub>3</sub>ℒ<sub>C</sub>
+            </div>
+            
+            <img src="https://arxiv.org/html/2506.15683v1/x3.png" alt="PhantomHunter架构图">
+            <p style="text-align: center; font-style: italic;">图1: PhantomHunter的整体架构</p>
+        </div>
+
+        <!-- 实验部分 -->
+        <div class="card">
+            <h2 class="section-title">实验</h2>
+            
+            <h3 class="subsection-title">实验设计</h3>
+            <p>实验使用LLaMA-2 7B-Chat、Gemma 7B-it和Mistral 7B-Instruct-v0.1作为基础模型，在arXiv学术摘要和问答(ELI5、金融、医学)两个场景下构建数据集。对每个基础模型使用全参数微调(Full)和LoRA微调方法，生成9个衍生模型。将计算机科学(cs)和金融(fin)领域的微调模型留作未见过的测试模型。</p>
+            
+            <table>
+                <caption>表1: 评估数据集统计</caption>
+                <tr>
+                    <th>数据集来源</th>
+                    <th>微调领域</th>
+                    <th>样本数量</th>
+                </tr>
+                <tr>
+                    <td>arXiv Train</td>
+                    <td>LLaMA base/phy/oth</td>
+                    <td>1,564/1,969/1,971</td>
+                </tr>
+                <tr>
+                    <td>arXiv Test</td>
+                    <td>LLaMA cs</td>
+                    <td>2,076</td>
+                </tr>
+                <tr>
+                    <td>Q&A Test</td>
+                    <td>LLaMA fin</td>
+                    <td>204</td>
+                </tr>
+                <tr>
+                    <td colspan="2">总计</td>
+                    <td>32,818</td>
+                </tr>
+            </table>
+            
+            <h3 class="subsection-title">实验结果</h3>
+            <p>PhantomHunter在检测未见过的微调LLM生成文本方面表现出色：</p>
+            <ul>
+                <li>在arXiv数据集上，全微调场景下的Macro F1达到96.24%，比最佳基线高3.65%</li>
+                <li>在问答数据集上，LoRA微调场景下的Macro F1达到96.40%，比最佳基线高6.09%</li>
+                <li>与商业检测器相比，PhantomHunter在1%FPR下的TPR达到99.45%，Macro F1达到96.50%</li>
+            </ul>
+            
+            <table>
+                <caption>表2: 主要实验结果(F1分数)</caption>
+                <tr>
+                    <th>方法</th>
+                    <th colspan="2">arXiv</th>
+                    <th colspan="2">Q&A</th>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>Full</td>
+                    <td>LoRA</td>
+                    <td>Full</td>
+                    <td>LoRA</td>
+                </tr>
+                <tr>
+                    <td>RoBERTa</td>
+                    <td>82.83</td>
+                    <td>79.67</td>
+                    <td>89.09</td>
+                    <td>83.39</td>
+                </tr>
+                <tr>
+                    <td>SeqXGPT</td>
+                    <td>92.85</td>
+                    <td>93.32</td>
+                    <td>93.47</td>
+                    <td>86.83</td>
+                </tr>
+                <tr>
+                    <td>PhantomHunter</td>
+                    <td>96.24</td>
+                    <td>97.14</td>
+                    <td>96.98</td>
+                    <td>96.40</td>
+                </tr>
+            </table>
+            
+            <h3 class="subsection-title">实验总结</h3>
+            <p>消融研究表明：</p>
+            <ul>
+                <li>移除基础概率特征提取(BFE)导致性能下降最显著，Macro F1下降约15%</li>
+                <li>移除对比学习(CL)导致家族间特征区分度降低</li>
+                <li>移除专家混合(MoE)迫使分类器寻找所有家族生成文本与人类文本的决策边界</li>
+            </ul>
+            
+            <img src="https://arxiv.org/html/2506.15683v1/x2.png" alt="余弦相似度热图">
+            <p style="text-align: center; font-style: italic;">图2: 微调模型与基础模型token概率列表的余弦相似度热图</p>
+        </div>
+
+        <!-- 结论部分 -->
+        <div class="card">
+            <h2 class="section-title">结论</h2>
+            <p>PhantomHunter通过家族感知学习有效提升了针对未见过的私有调优LLM生成文本的检测性能。实验表明：</p>
+            <ul>
+                <li>微调开源基础模型会显著降低生成文本的可检测性</li>
+                <li>捕获LLM家族的共享特征能有效应对私有调优带来的挑战</li>
+                <li>与7种方法和3种工业服务相比，PhantomHunter表现出优越性</li>
+                <li>该方法具有良好的兼容性和可扩展性，能适应现实场景需求</li>
+            </ul>
+            <p>未来工作将增强其对未知LLM家族的泛化能力并降低内存成本。</p>
+        </div>
+
+        <!-- 研究建议 -->
+        <div class="card">
+            <h2 class="section-title">研究方向建议</h2>
+            <p>基于本论文的研究，未来可探索的方向包括：</p>
+            <ul>
+                <li>扩展PhantomHunter支持更多LLM家族，提高泛化能力</li>
+                <li>研究降低基础模型特征提取计算开销的方法</li>
+                <li>探索细粒度的句子级或token级检测方案</li>
+                <li>结合水印技术和统计特征的多重检测方案</li>
+                <li>研究更高效的家族特征表示学习方法</li>
+            </ul>
+            <div class="footer">
+                本报告来源于晓勇的论文智能助手
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+```
