@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VLN-R1论文总结</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            --primary-color: #4a6bdf;
+            --secondary-color: #6c5ce7;
+            --text-color: #333;
+            --light-bg: #f8f9fa;
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --border-radius: 8px;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        
+        .header-card {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .paper-title {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+        
+        .authors {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            opacity: 0.9;
+        }
+        
+        .links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 15px;
+        }
+        
+        .link-btn {
+            padding: 8px 16px;
+            background-color: white;
+            color: var(--primary-color);
+            text-decoration: none;
+            border-radius: 20px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .link-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .card {
+            background-color: var(--light-bg);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .section-title {
+            font-size: 1.8rem;
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+        }
+        
+        .subsection-title {
+            font-size: 1.4rem;
+            color: var(--secondary-color);
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+        
+        .highlight {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .method-point {
+            margin-bottom: 15px;
+            padding-left: 15px;
+            border-left: 3px solid var(--secondary-color);
+        }
+        
+        .figure-container {
+            text-align: center;
+            margin: 25px 0;
+        }
+        
+        .figure-img {
+            max-width: 100%;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+        }
+        
+        .figure-caption {
+            margin-top: 10px;
+            font-style: italic;
+            color: #666;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: var(--card-shadow);
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        
+        .formula {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+        
+        .formula-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--secondary-color);
+        }
+        
+        .conclusion-card {
+            background-color: #e8f4fc;
+            border-left: 5px solid var(--primary-color);
+        }
+        
+        .footer-note {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .paper-title {
+                font-size: 1.8rem;
+            }
+            
+            .section-title {
+                font-size: 1.5rem;
+            }
+            
+            .subsection-title {
+                font-size: 1.2rem;
+            }
+            
+            .card {
+                padding: 15px;
+            }
+            
+            th, td {
+                padding: 8px 10px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 标题卡片 -->
+    <div class="header-card">
+        <h1 class="paper-title">VLN-R1: 通过强化微调实现视觉语言导航</h1>
+        <div class="authors">张洋齐, 张志雄, 余一舟, 王佳琪, 赵恒爽</div>
+        <div class="links">
+            <a href="http://arxiv.org/html/2506.17221v1" class="link-btn" target="_blank">论文链接</a>
+            <a href="https://vlnr1.github.io" class="link-btn" target="_blank">代码链接</a>
+        </div>
+    </div>
+    
+    <!-- 摘要卡片 -->
+    <div class="card">
+        <h2 class="section-title">摘要</h2>
+        <p>视觉语言导航(VLN)是具身AI的核心挑战，要求智能体根据自然语言指令在真实环境中导航。当前基于语言模型的导航系统在离散拓扑图上操作，限制了路径规划在预定义节点连接中的能力。我们提出了VLN-R1，这是一个端到端框架，利用大型视觉语言模型(LVLM)直接将自我中心视频流转化为连续导航动作，采用受DeepSeek-R1启发的GRPO训练方法。为了有效训练，我们首先使用3D模拟器(即Habitat)构建了VLN-Ego数据集，并提出长短时记忆采样来平衡历史和当前观察。虽然大型语言模型可以监督完整的文本指令，但它们缺乏细粒度的动作级控制。我们的框架采用两阶段训练方法：a)监督微调(SFT)使模型的动作序列文本预测与专家演示对齐，然后b)强化微调(RFT)结合时间衰减奖励(TDR)机制，策略性地加权多步未来动作。实验结果表明，VLN-R1在VLN-CE基准测试中表现出色。VLN-R1证明LVLM可以驱动具身导航，并通过数据高效、奖励驱动的后训练增强任务特定推理能力。</p>
+    </div>
+    
+    <!-- 背景部分 -->
+    <div class="card">
+        <h2 class="section-title">背景</h2>
+        
+        <h3 class="subsection-title">存在的问题</h3>
+        <p>视觉语言导航(VLN)是具身AI的基础挑战，智能体需要在不熟悉的3D环境中根据自然语言指令进行导航。当前研究面临几个关键问题：</p>
+        <ul>
+            <li>现有方法通常使用具有固定连接性的基于图的表示，限制了智能体对未见或连续环境的泛化能力</li>
+            <li>虽然一些研究将VLN推广到连续空间(VLN-CE)，但它们通常需要额外信息(如深度图和导航图)，并依赖CLIP等专门模型进行视觉语言对齐</li>
+            <li>现有方法在人与智能体交互中的通用性有限</li>
+        </ul>
+        
+        <h3 class="subsection-title">之前的方法及不足</h3>
+        <p>先前的方法主要分为两类：</p>
+        <ol>
+            <li><span class="highlight">离散环境方法</span>：如VLN-BERT和HAMT，在预定义节点间传送，难以适应开放世界场景</li>
+            <li><span class="highlight">连续环境方法</span>：如VLN-CE，支持低级动作预测(如转向角度、步长)，但仍存在以下不足：
+                <ul>
+                    <li>依赖模块化视觉处理流程，限制了可扩展性和泛化性</li>
+                    <li>需要额外传感器数据(深度、里程计等)</li>
+                    <li>缺乏端到端的训练框架</li>
+                </ul>
+            </li>
+        </ol>
+        
+        <h3 class="subsection-title">论文提出的方法及贡献</h3>
+        <p>本文提出VLN-R1框架，主要贡献包括：</p>
+        <ul>
+            <li>引入<span class="highlight">VLN-Ego数据集</span>，包含自我中心视频流与未来动作预测的配对数据</li>
+            <li>提出<span class="highlight">端到端具身AI框架</span>，使用大型视觉语言模型(LVLM)处理自我中心视频流</li>
+            <li>首创将GRPO和强化微调(RFT)集成到导航任务中，设计<span class="highlight">时间衰减奖励(TDR)</span>机制</li>
+        </ul>
+        
+        <div class="figure-container">
+            <img src="https://arxiv.org/html/2506.17221v1/x1.png" alt="VLN-R1框架概览" class="figure-img">
+            <p class="figure-caption">图1：VLN-R1框架概览。与传统LLM/LVLM模型基于离散位置和第三人称路径规划不同，VLN-R1直接使用第一人称视角视频在连续环境中探索</p>
+        </div>
+    </div>
+    
+    <!-- 方法部分 -->
+    <div class="card">
+        <h2 class="section-title">方法</h2>
+        
+        <h3 class="subsection-title">1. VLN-Ego数据集引擎</h3>
+        <p>VLN-Ego是第一人称视频流为基础的LVLM训练引擎，主要特点：</p>
+        <div class="method-point">
+            <p><span class="highlight">数据来源</span>：基于Meta的Habitat模拟平台，使用Matterport3D场景数据集，共90个场景分为训练(61)、验证(11)和测试(18)集</p>
+        </div>
+        <div class="method-point">
+            <p><span class="highlight">标注结构</span>：包含三部分：(1)指令部分(<System Message>和<Instruction>)；(2)视觉部分(历史帧和当前观察)；(3)动作部分(四个选项：{FORWARD, TURN-LEFT, TURN-RIGHT, STOP})</p>
+        </div>
+        
+        <div class="figure-container">
+            <img src="https://arxiv.org/html/2506.17221v1/x2.png" alt="VLN-Ego数据集" class="figure-img">
+            <p class="figure-caption">图2：VLN-Ego数据集。使用Habitat虚拟模拟引擎创建，文本标注主要由三部分组成：指令部分、视觉部分和动作部分</p>
+        </div>
+        
+        <h3 class="subsection-title">2. 长短时记忆采样</h3>
+        <p>提出长短时记忆采样策略，平衡短期相关性和长期上下文意识：</p>
+        <div class="formula">
+            <div class="formula-title">长短时记忆采样公式</div>
+            \[
+            \mathcal{H}_t=\underbrace{\{v_{t-1\cdot\delta_1},v_{t-2\cdot\delta_1},\ldots,v_{t-M}\}}_{\text{短期记忆(采样率$\delta_1$)}}\cup\underbrace{\{v_{t-M-\delta_2},v_{t-M-2\delta_2},\ldots,v_0\}}_{\text{长期记忆(采样率$\delta_2$)}}
+            \]
+            <p>短期记忆在M步内每δ₁帧采样，长期记忆以δ₂间隔采样剩余历史(δ₂>δ₁)，既保留近期细节又保持长期上下文。</p>
+        </div>
+        
+        <h3 class="subsection-title">3. 两阶段训练方法</h3>
+        <div class="method-point">
+            <p><span class="highlight">监督微调(SFT)阶段</span>：通过交叉熵损失使预测文本与真实动作序列对齐</p>
+            <div class="formula">
+                \[
+                \mathcal{L}_{\text{SFT}}=-\sum_{k=0}^{n-1}\sum_{j=1}^{L_k}\log P(w^*_j|w^*_{1:j-1},\mathcal{H}_t,v_t,\mathcal{I})
+                \]
+                <p>其中Lₖ表示第k个动作文本的token长度，监督选项标识符(A/B/C/D)和动作描述。</p>
+            </div>
+        </div>
+        
+        <div class="method-point">
+            <p><span class="highlight">强化微调(RFT)阶段</span>：采用GRPO(Group Relative Policy Optimization)和时间衰减奖励(TDR)</p>
+            <div class="formula">
+                <div class="formula-title">GRPO优化目标</div>
+                \[
+                J_{\text{GRPO}}(\theta)=\mathbb{E}\bigg{[}\sum_{i=1}^G\min\bigg{(}\frac{\pi_\theta(o_i\mid q)}{\pi_{\theta_{\text{ref}}}(o_i\mid q)}A_i,\quad\text{clip}\left(\frac{\pi_\theta(o_i\mid q)}{\pi_{\theta_{\text{ref}}}(o_i\mid q)},1-\epsilon,1+\epsilon\right)A_i\bigg{)}\quad-\beta D_{\text{KL}}(\pi_\theta\parallel\pi_{\text{ref}})\bigg{]}
+                \]
+                <p>其中Aᵢ表示组内相对优势，KL散度防止过度偏离参考模型π_ref。</p>
+            </div>
+            <div class="formula">
+                <div class="formula-title">时间衰减奖励(TDR)</div>
+                \[
+                R_{\text{nav}}=\sum_{k=0}^{n-1}\gamma^k\cdot\mathbb{I}\ (\alpha_{t+k}=\alpha^*_{t+k})
+                \]
+                <p>γᵏ表示时间衰减项，优先考虑早期正确动作，𝕀是指示函数，预测动作匹配真实动作时输出1。</p>
+            </div>
+        </div>
+        
+        <div class="figure-container">
+            <img src="https://arxiv.org/html/2506.17221v1/x3.png" alt="VLN-R1模型架构" class="figure-img">
+            <p class="figure-caption">图3：VLN-R1模型架构。采用长短时记忆方法处理视觉输入，训练分为两个阶段：SFT阶段仅监督输出文本；RFT阶段使用设计的TDR机制进行监督</p>
+        </div>
+    </div>
+    
+    <!-- 实验部分 -->
+    <div class="card">
+        <h2 class="section-title">实验</h2>
+        
+        <h3 class="subsection-title">实验设计</h3>
+        <ul>
+            <li><span class="highlight">数据集</span>：使用VLN-Ego训练集(1.8M样本)，在18个保留场景(Val-Unseen)上评估</li>
+            <li><span class="highlight">评估指标</span>：SR↑(成功率)、OS↑(Oracle SR)、SPL↑(路径长度加权成功率)、NE↓(导航误差)、TL↓(轨迹长度)</li>
+            <li><span class="highlight">模型</span>：训练Qwen2-VL-2B和Qwen2-VL-7B模型，使用DeepSpeed ZeRO-3优化</li>
+            <li><span class="highlight">训练参数</span>：
+                <ul>
+                    <li>SFT：学习率5e-6，余弦调度，batch size 64</li>
+                    <li>RFT：学习率1e-6，权重衰减0.01，β=0.04，GRPO每组8样本</li>
+                </ul>
+            </li>
+        </ul>
+        
+        <h3 class="subsection-title">实验结果</h3>
+        <p><strong>VLN-CE R2R结果</strong>：</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>方法</th>
+                    <th>观察</th>
+                    <th>SR↑</th>
+                    <th>OS↑</th>
+                    <th>SPL↑</th>
+                    <th>NE↓</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>AG-CMTP</td>
+                    <td>地图+里程+深度</td>
+                    <td>23.1</td>
+                    <td>39.2</td>
+                    <td>19.1</td>
+                    <td>7.90</td>
+                </tr>
+                <tr>
+                    <td>VLN (SFT, Qwen2-VL-2B)</td>
+                    <td>RGB</td>
+                    <td>21.2</td>
+                    <td>33.0</td>
+                    <td>15.9</td>
+                    <td>8.27</td>
+                </tr>
+                <tr>
+                    <td>VLN-R1 (Qwen2-VL-7B)</td>
+                    <td>RGB</td>
+                    <td>30.2</td>
+                    <td>41.2</td>
+                    <td>21.8</td>
+                    <td>7.0</td>
+                </tr>
